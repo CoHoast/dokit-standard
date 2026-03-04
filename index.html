@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DOKit — Dashboard</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' style='stop-color:%236366f1'/><stop offset='100%' style='stop-color:%238b5cf6'/></linearGradient></defs><rect width='100' height='100' rx='20' fill='url(%23g)'/><path d='M50 25L30 55h15l-5 20 25-30H50l5-20z' fill='white'/></svg>">
+  <style>
+    body { font-family: 'Inter', sans-serif; }
+    
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
+    /* Vibrant gradient orb for dashboard - matches marketing site Build #204 */
+    .dashboard-orb {
+      background: radial-gradient(circle at 30% 40%, rgba(255, 150, 180, 0.9) 0%, transparent 40%),
+                  radial-gradient(circle at 70% 50%, rgba(120, 180, 255, 0.9) 0%, transparent 40%),
+                  radial-gradient(circle at 50% 60%, rgba(180, 160, 255, 0.95) 0%, transparent 45%),
+                  radial-gradient(circle at 60% 30%, rgba(140, 230, 240, 0.8) 0%, transparent 35%);
+      filter: blur(30px);
+      animation: float 12s ease-in-out infinite;
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0) scale(1); }
+      50% { transform: translateY(-10px) scale(1.02); }
+    }
+    
+    /* Nav item active state */
+    .nav-item.active {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(139, 92, 246, 0.1));
+      color: #4f46e5;
+      border-right: 3px solid #6366f1;
+    }
+    .nav-item:hover:not(.active) {
+      background: #f8fafc;
+    }
+    
+    /* Sidebar animation */
+    .sidebar-collapsed .sidebar-label { display: none; }
+    .sidebar-collapsed .sidebar { width: 72px; }
+    .sidebar-collapsed .main-area { margin-left: 72px; }
+    
+    /* Processing animation */
+    @keyframes pulse-ring {
+      0% { transform: scale(0.8); opacity: 1; }
+      100% { transform: scale(1.4); opacity: 0; }
+    }
+    .processing-indicator::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: #f59e0b;
+      animation: pulse-ring 1.5s ease-out infinite;
+    }
+    
+    /* Stat card hover */
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 40px -10px rgba(0,0,0,0.1);
+    }
+    
+    /* Table row hover */
+    .doc-row:hover {
+      background: #f8fafc;
+    }
+    
+    /* Status badges */
+    .status-completed { background: #ecfdf5; color: #059669; }
+    .status-processing { background: #fffbeb; color: #d97706; }
+    .status-review { background: #eff6ff; color: #2563eb; }
+    .status-failed { background: #fef2f2; color: #dc2626; }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen">
+  
+  <div class="flex min-h-screen">
+    
+    <!-- Sidebar -->
+    <aside class="sidebar w-64 bg-white border-r border-slate-100 fixed left-0 top-0 bottom-0 z-40 flex flex-col">
+      
+      <!-- Logo -->
+      <div class="h-16 px-5 flex items-center border-b border-slate-100">
+        <a href="#" class="flex items-center gap-2">
+          <div class="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-xl flex items-center justify-center shadow-lg shadow-indigo-500/25">
+            <svg width="20" height="20" class="text-white" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M13 3L4 14h7l-2 7 9-11h-7l2-7z"/>
+            </svg>
+          </div>
+          <span class="text-lg font-bold tracking-tight text-slate-800 sidebar-label">DOKit</span>
+        </a>
+      </div>
+      
+      <!-- Organization Selector -->
+      <div class="px-4 py-3 border-b border-slate-100">
+        <div class="flex items-center gap-3 p-2 rounded-xl bg-slate-50 cursor-pointer hover:bg-slate-100 transition-colors">
+          <div class="w-8 h-8 bg-gradient-to-br from-emerald-400 to-teal-500 rounded-lg flex items-center justify-center text-white text-xs font-bold">
+            MC
+          </div>
+          <div class="flex-1 min-w-0 sidebar-label">
+            <div class="text-sm font-semibold text-slate-800 truncate">Memorial Clinic</div>
+            <div class="text-xs text-slate-500">Pro Plan</div>
+          </div>
+          <svg class="w-4 h-4 text-slate-400 sidebar-label" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l4-4 4 4m0 6l-4 4-4-4"/>
+          </svg>
+        </div>
+      </div>
+      
+      <!-- Navigation -->
+      <nav class="flex-1 py-4 overflow-y-auto">
+        
+        <!-- Main -->
+        <div class="px-4 mb-6">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3 sidebar-label">Main</div>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all active">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+            </svg>
+            <span class="sidebar-label">Dashboard</span>
+          </a>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+            </svg>
+            <span class="sidebar-label">Documents</span>
+            <span class="ml-auto bg-slate-100 text-slate-600 text-xs font-semibold px-2 py-0.5 rounded-full sidebar-label">247</span>
+          </a>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span class="sidebar-label">Upload</span>
+          </a>
+        </div>
+        
+        <!-- Processing -->
+        <div class="px-4 mb-6">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3 sidebar-label">Processing</div>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+            </svg>
+            <span class="sidebar-label">Review Queue</span>
+            <span class="ml-auto bg-amber-100 text-amber-700 text-xs font-semibold px-2 py-0.5 rounded-full sidebar-label">12</span>
+          </a>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/>
+            </svg>
+            <span class="sidebar-label">Decision Rules</span>
+          </a>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"/>
+            </svg>
+            <span class="sidebar-label">Integrations</span>
+          </a>
+        </div>
+        
+        <!-- Analytics -->
+        <div class="px-4 mb-6">
+          <div class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2 px-3 sidebar-label">Analytics</div>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+            </svg>
+            <span class="sidebar-label">Reports</span>
+          </a>
+          <a href="#" class="nav-item flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-slate-600 transition-all">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            </svg>
+            <span class="sidebar-label">Audit Trail</span>
+          </a>
+        </div>
+        
+      </nav>
+      
+      <!-- User Section -->
+      <div class="border-t border-slate-100 p-4">
+        <a href="#" class="flex items-center gap-3 p-2 rounded-xl hover:bg-slate-50 transition-colors">
+          <div class="w-9 h-9 bg-gradient-to-br from-slate-600 to-slate-700 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+            JD
+          </div>
+          <div class="flex-1 min-w-0 sidebar-label">
+            <div class="text-sm font-semibold text-slate-800 truncate">Jane Doe</div>
+            <div class="text-xs text-slate-500">Administrator</div>
+          </div>
+          <svg class="w-4 h-4 text-slate-400 sidebar-label" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/>
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+          </svg>
+        </a>
+      </div>
+      
+    </aside>
+    
+    <!-- Main Content Area -->
+    <main class="main-area ml-64 flex-1 min-h-screen">
+      
+      <!-- Top Bar -->
+      <header class="h-16 bg-white/80 backdrop-blur-xl border-b border-slate-100 sticky top-0 z-30 flex items-center justify-between px-6">
+        <div class="flex items-center gap-4">
+          <button class="lg:hidden p-2 rounded-lg hover:bg-slate-100">
+            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/>
+            </svg>
+          </button>
+          <div>
+            <h1 class="text-lg font-semibold text-slate-800">Dashboard</h1>
+            <p class="text-sm text-slate-500">Welcome back, Jane</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-3">
+          <!-- Search -->
+          <div class="hidden md:flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-xl border border-slate-200">
+            <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+            </svg>
+            <input type="text" placeholder="Search documents..." class="bg-transparent text-sm text-slate-600 placeholder-slate-400 outline-none w-48">
+            <kbd class="hidden lg:inline-block px-1.5 py-0.5 text-xs text-slate-400 bg-white rounded border border-slate-200">⌘K</kbd>
+          </div>
+          
+          <!-- Notifications -->
+          <button class="relative p-2 rounded-xl hover:bg-slate-100 transition-colors">
+            <svg class="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/>
+            </svg>
+            <span class="absolute top-1.5 right-1.5 w-2 h-2 bg-rose-500 rounded-full"></span>
+          </button>
+          
+          <!-- Upload Button -->
+          <button class="flex items-center gap-2 px-4 py-2 bg-slate-900 hover:bg-slate-800 text-white text-sm font-medium rounded-full transition-all shadow-lg shadow-slate-900/20">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+            </svg>
+            <span>Upload</span>
+          </button>
+        </div>
+      </header>
+      
+      <!-- Dashboard Content -->
+      <div class="p-6 relative">
+        
+        <!-- Subtle Background Orb -->
+        <div class="absolute top-0 right-0 w-[500px] h-[500px] pointer-events-none">
+          <div class="dashboard-orb w-full h-full rounded-full"></div>
+        </div>
+        
+        <div class="relative">
+          
+          <!-- Intake Email Card -->
+          <div class="bg-gradient-to-r from-indigo-500/10 via-violet-500/10 to-purple-500/10 rounded-2xl p-6 mb-6 border border-indigo-100">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div class="flex items-center gap-4">
+                <div class="w-12 h-12 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-xl flex items-center justify-center">
+                  <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/>
+                  </svg>
+                </div>
+                <div>
+                  <p class="text-sm font-medium text-indigo-600 mb-1">Your Intake Email</p>
+                  <p class="text-xl font-bold text-slate-900 font-mono">intake-memorial@dokit.ai</p>
+                  <p class="text-sm text-slate-500 mt-1">Forward documents here for automatic AI processing</p>
+                </div>
+              </div>
+              <button class="flex items-center gap-2 px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 text-sm font-medium rounded-xl border border-slate-200 transition-all">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"/>
+                </svg>
+                Copy Email
+              </button>
+            </div>
+          </div>
+          
+          <!-- Stats Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            
+            <!-- Total Documents -->
+            <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-blue-100 to-indigo-100 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                  </svg>
+                </div>
+                <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">+12%</span>
+              </div>
+              <p class="text-sm text-slate-500 mb-1">Total Documents</p>
+              <p class="text-2xl font-bold text-slate-900">2,847</p>
+            </div>
+            
+            <!-- Processed Today -->
+            <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-emerald-100 to-teal-100 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                  </svg>
+                </div>
+                <span class="text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">Live</span>
+              </div>
+              <p class="text-sm text-slate-500 mb-1">Processed Today</p>
+              <p class="text-2xl font-bold text-slate-900">47</p>
+            </div>
+            
+            <!-- Average Time -->
+            <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-violet-100 to-purple-100 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/>
+                  </svg>
+                </div>
+                <span class="text-xs font-medium text-violet-600 bg-violet-50 px-2 py-1 rounded-full">-23%</span>
+              </div>
+              <p class="text-sm text-slate-500 mb-1">Avg Processing</p>
+              <p class="text-2xl font-bold text-slate-900">8.3<span class="text-base font-normal text-slate-400">s</span></p>
+            </div>
+            
+            <!-- Accuracy -->
+            <div class="stat-card bg-white rounded-2xl p-5 border border-slate-100 shadow-sm transition-all">
+              <div class="flex items-start justify-between mb-3">
+                <div class="w-10 h-10 bg-gradient-to-br from-amber-100 to-orange-100 rounded-xl flex items-center justify-center">
+                  <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+                  </svg>
+                </div>
+              </div>
+              <p class="text-sm text-slate-500 mb-1">AI Accuracy</p>
+              <p class="text-2xl font-bold text-emerald-600">99.2<span class="text-base font-normal text-slate-400">%</span></p>
+            </div>
+            
+          </div>
+          
+          <!-- Main Content Grid -->
+          <div class="grid lg:grid-cols-3 gap-6">
+            
+            <!-- Recent Documents (2 cols) -->
+            <div class="lg:col-span-2">
+              <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+                <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                  <div>
+                    <h2 class="text-lg font-semibold text-slate-900">Recent Documents</h2>
+                    <p class="text-sm text-slate-500">Latest processed documents</p>
+                  </div>
+                  <a href="#" class="text-sm font-medium text-indigo-600 hover:text-indigo-700">View all →</a>
+                </div>
+                
+                <div class="divide-y divide-slate-100">
+                  
+                  <!-- Document Row 1 -->
+                  <div class="doc-row p-4 flex items-center gap-4 cursor-pointer transition-colors">
+                    <div class="w-10 h-10 bg-violet-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-violet-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-slate-900 truncate">CMS-1500_Johnson_Sarah.pdf</p>
+                      <p class="text-xs text-slate-500">Professional Claim • 2 min ago</p>
+                    </div>
+                    <span class="status-completed px-2.5 py-1 text-xs font-medium rounded-full">Completed</span>
+                    <span class="text-sm font-semibold text-emerald-600">98%</span>
+                  </div>
+                  
+                  <!-- Document Row 2 -->
+                  <div class="doc-row p-4 flex items-center gap-4 cursor-pointer transition-colors">
+                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-slate-900 truncate">UB04_Memorial_Hospital_03012026.pdf</p>
+                      <p class="text-xs text-slate-500">Institutional Claim • 5 min ago</p>
+                    </div>
+                    <span class="status-completed px-2.5 py-1 text-xs font-medium rounded-full">Completed</span>
+                    <span class="text-sm font-semibold text-emerald-600">96%</span>
+                  </div>
+                  
+                  <!-- Document Row 3 -->
+                  <div class="doc-row p-4 flex items-center gap-4 cursor-pointer transition-colors">
+                    <div class="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center flex-shrink-0 relative">
+                      <svg class="w-5 h-5 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-slate-900 truncate">EOB_BlueCross_Batch_247.pdf</p>
+                      <p class="text-xs text-slate-500">Explanation of Benefits • 8 min ago</p>
+                    </div>
+                    <span class="status-review px-2.5 py-1 text-xs font-medium rounded-full">Review</span>
+                    <span class="text-sm font-semibold text-amber-600">87%</span>
+                  </div>
+                  
+                  <!-- Document Row 4 -->
+                  <div class="doc-row p-4 flex items-center gap-4 cursor-pointer transition-colors">
+                    <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-slate-900 truncate">CMS-1500_Williams_Michael.pdf</p>
+                      <p class="text-xs text-slate-500">Professional Claim • 12 min ago</p>
+                    </div>
+                    <span class="status-completed px-2.5 py-1 text-xs font-medium rounded-full">Completed</span>
+                    <span class="text-sm font-semibold text-emerald-600">99%</span>
+                  </div>
+                  
+                  <!-- Document Row 5 -->
+                  <div class="doc-row p-4 flex items-center gap-4 cursor-pointer transition-colors">
+                    <div class="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <svg class="w-5 h-5 text-rose-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                      </svg>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-slate-900 truncate">Invoice_Unclear_Scan.pdf</p>
+                      <p class="text-xs text-slate-500">Unknown Type • 15 min ago</p>
+                    </div>
+                    <span class="status-failed px-2.5 py-1 text-xs font-medium rounded-full">Failed</span>
+                    <span class="text-sm font-semibold text-rose-600">—</span>
+                  </div>
+                  
+                </div>
+              </div>
+            </div>
+            
+            <!-- Right Column -->
+            <div class="space-y-6">
+              
+              <!-- Processing Status -->
+              <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-900 mb-4">Processing Status</h3>
+                <div class="space-y-3">
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                      <span class="text-sm text-slate-600">Completed</span>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-900">2,784</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 bg-amber-500 rounded-full"></div>
+                      <span class="text-sm text-slate-600">Pending Review</span>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-900">12</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
+                      <span class="text-sm text-slate-600">Processing</span>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-900">3</span>
+                  </div>
+                  <div class="flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                      <div class="w-2 h-2 bg-rose-500 rounded-full"></div>
+                      <span class="text-sm text-slate-600">Failed</span>
+                    </div>
+                    <span class="text-sm font-semibold text-slate-900">48</span>
+                  </div>
+                </div>
+                
+                <!-- Progress Bar -->
+                <div class="mt-5 pt-4 border-t border-slate-100">
+                  <div class="flex items-center justify-between text-xs text-slate-500 mb-2">
+                    <span>Success Rate</span>
+                    <span class="font-semibold text-emerald-600">97.8%</span>
+                  </div>
+                  <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style="width: 97.8%"></div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Document Types -->
+              <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5">
+                <h3 class="text-sm font-semibold text-slate-900 mb-4">Document Types</h3>
+                <div class="space-y-3">
+                  <div>
+                    <div class="flex items-center justify-between text-sm mb-1">
+                      <span class="text-slate-600">CMS-1500</span>
+                      <span class="font-semibold text-slate-900">1,842</span>
+                    </div>
+                    <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div class="h-full bg-indigo-500 rounded-full" style="width: 65%"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between text-sm mb-1">
+                      <span class="text-slate-600">UB-04</span>
+                      <span class="font-semibold text-slate-900">623</span>
+                    </div>
+                    <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div class="h-full bg-violet-500 rounded-full" style="width: 22%"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between text-sm mb-1">
+                      <span class="text-slate-600">EOB</span>
+                      <span class="font-semibold text-slate-900">284</span>
+                    </div>
+                    <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div class="h-full bg-emerald-500 rounded-full" style="width: 10%"></div>
+                    </div>
+                  </div>
+                  <div>
+                    <div class="flex items-center justify-between text-sm mb-1">
+                      <span class="text-slate-600">Other</span>
+                      <span class="font-semibold text-slate-900">98</span>
+                    </div>
+                    <div class="h-2 bg-slate-100 rounded-full overflow-hidden">
+                      <div class="h-full bg-slate-400 rounded-full" style="width: 3%"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              <!-- Quick Actions -->
+              <div class="bg-gradient-to-br from-slate-900 to-slate-800 rounded-2xl p-5 text-white">
+                <h3 class="text-sm font-semibold mb-4">Quick Actions</h3>
+                <div class="space-y-2">
+                  <button class="w-full flex items-center gap-3 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-left">
+                    <svg class="w-5 h-5 text-indigo-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                    </svg>
+                    <span class="text-sm font-medium">Upload Documents</span>
+                  </button>
+                  <button class="w-full flex items-center gap-3 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-left">
+                    <svg class="w-5 h-5 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"/>
+                    </svg>
+                    <span class="text-sm font-medium">Review Queue (12)</span>
+                  </button>
+                  <button class="w-full flex items-center gap-3 px-4 py-3 bg-white/10 hover:bg-white/20 rounded-xl transition-colors text-left">
+                    <svg class="w-5 h-5 text-amber-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                    </svg>
+                    <span class="text-sm font-medium">Export Report</span>
+                  </button>
+                </div>
+              </div>
+              
+            </div>
+            
+          </div>
+          
+        </div>
+        
+      </div>
+      
+    </main>
+    
+  </div>
+  
+</body>
+</html>
