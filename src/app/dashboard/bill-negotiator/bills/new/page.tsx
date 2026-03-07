@@ -1,9 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useClient } from '@/context/ClientContext';
 
 interface LineItem {
   cpt_code: string;
@@ -14,8 +13,8 @@ interface LineItem {
 
 export default function NewBillPage() {
   const router = useRouter();
-  const { selectedClient } = useClient();
   const [loading, setLoading] = useState(false);
+  const clientId = process.env.NEXT_PUBLIC_CLIENT_ID || '1';
   
   const [formData, setFormData] = useState({
     member_id: '',
@@ -64,11 +63,6 @@ export default function NewBillPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!selectedClient) {
-      alert('Please select a client first');
-      return;
-    }
-    
     if (!formData.member_name || !formData.provider_name || !formData.total_billed) {
       alert('Please fill in required fields: Member Name, Provider Name, and Total Billed');
       return;
@@ -77,8 +71,9 @@ export default function NewBillPage() {
     setLoading(true);
     
     try {
+      const apiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || '';
       const payload = {
-        client_id: selectedClient.id,
+        client_id: parseInt(clientId),
         member_id: formData.member_id || `M-${Date.now()}`,
         member_name: formData.member_name,
         provider_name: formData.provider_name,
@@ -91,7 +86,7 @@ export default function NewBillPage() {
         status: 'received'
       };
       
-      const res = await fetch('/api/db/bill-negotiator/bills', {
+      const res = await fetch(`${apiUrl}/api/db/bill-negotiator/bills`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
@@ -144,23 +139,6 @@ export default function NewBillPage() {
           Enter bill details to start the negotiation process
         </p>
       </div>
-
-      {!selectedClient && (
-        <div style={{
-          padding: '16px 20px',
-          background: '#fef3c7',
-          borderRadius: '10px',
-          marginBottom: '24px',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '12px'
-        }}>
-          <svg width="20" height="20" fill="none" stroke="#d97706" strokeWidth="2" viewBox="0 0 24 24">
-            <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-          </svg>
-          <span style={{ color: '#92400e', fontWeight: 500 }}>Please select a client from the dropdown before adding a bill.</span>
-        </div>
-      )}
 
       <form onSubmit={handleSubmit}>
         {/* Member & Provider Section */}
@@ -486,16 +464,16 @@ export default function NewBillPage() {
           </Link>
           <button
             type="submit"
-            disabled={loading || !selectedClient}
+            disabled={loading}
             style={{
               padding: '14px 28px',
-              background: loading || !selectedClient ? '#94a3b8' : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
+              background: loading ? '#94a3b8' : 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
               color: 'white',
               border: 'none',
               borderRadius: '10px',
               fontWeight: 600,
               fontSize: '14px',
-              cursor: loading || !selectedClient ? 'not-allowed' : 'pointer',
+              cursor: loading ? 'not-allowed' : 'pointer',
               display: 'flex',
               alignItems: 'center',
               gap: '8px'
