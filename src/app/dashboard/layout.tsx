@@ -4,6 +4,15 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import React, { useState, useEffect } from 'react';
 
+/**
+ * DOKit Dashboard Layout
+ * 
+ * Design System Colors:
+ * - Sidebar: #0F172A (bg), #1E293B (hover), #334155 (border), #F1F5F9 (text), #94A3B8 (muted)
+ * - Content: #F8FAFC (bg), #FFFFFF (cards), #E2E8F0 (borders), #0F172A (text), #64748B (muted)
+ * - Accent: #3B82F6 (blue), #6366F1 (indigo), #DBEAFE (light)
+ */
+
 // Workflow icons mapping
 const WORKFLOW_ICONS: Record<string, string> = {
   'document-intake': 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
@@ -80,7 +89,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const fetchEnabledWorkflows = async () => {
     try {
-      // Get client ID from env or default
       const clientId = process.env.NEXT_PUBLIC_CLIENT_ID || '1';
       const apiUrl = process.env.NEXT_PUBLIC_ADMIN_API_URL || '';
       
@@ -92,12 +100,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }
     } catch (error) {
       console.error('Error fetching workflows:', error);
-      // Continue with empty workflows - show minimal sidebar
     }
     setLoading(false);
   };
 
-  // Build dynamic navigation from enabled workflows
   const buildWorkflowNavigation = () => {
     if (workflows.length === 0) return [];
     
@@ -119,15 +125,19 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   ];
 
   return (
-    <div className="min-h-screen gradient-bg">
-      {/* Mobile Header */}
-      <div className="lg:hidden fixed top-0 left-0 right-0 z-50 bg-slate-900 border-b border-slate-800 px-4 h-14 flex items-center justify-between">
+    <div className="min-h-screen" style={{ backgroundColor: '#F8FAFC' }}>
+      {/* Mobile Header - Dark Navy */}
+      <div 
+        className="lg:hidden fixed top-0 left-0 right-0 z-50 px-4 h-16 flex items-center justify-between"
+        style={{ backgroundColor: '#0F172A', borderBottom: '1px solid #334155' }}
+      >
         <div className="flex items-center">
           <img src="/dokit-logo-white.png" alt="DOKit" className="h-6" />
         </div>
         <button 
           onClick={() => setSidebarOpen(true)}
-          className="p-2 text-white hover:text-slate-300"
+          className="p-2 transition-colors"
+          style={{ color: '#F1F5F9' }}
         >
           <svg width="24" height="24" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
             <path d="M4 6h16M4 12h16M4 18h16"/>
@@ -138,27 +148,34 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Sidebar Overlay */}
       {sidebarOpen && (
         <div 
-          className="lg:hidden fixed inset-0 z-40 bg-black/20 backdrop-blur-sm"
+          className="lg:hidden fixed inset-0 z-40 bg-black/40 backdrop-blur-sm"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
-      {/* Sidebar */}
-      <aside className={`
-        fixed top-0 left-0 z-50 h-full w-64 bg-white border-r border-slate-100 
-        transform transition-transform duration-200 ease-in-out
-        lg:translate-x-0
-        ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
-      `}>
+      {/* Sidebar - Dark Navy */}
+      <aside 
+        className={`
+          fixed top-0 left-0 z-50 h-full w-[260px]
+          transform transition-transform duration-200 ease-in-out
+          lg:translate-x-0
+          ${sidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+        `}
+        style={{ backgroundColor: '#0F172A', borderRight: '1px solid #334155' }}
+      >
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="h-16 px-5 flex items-center justify-between border-b border-slate-100 bg-slate-900">
+          {/* Logo Header */}
+          <div 
+            className="h-16 px-5 flex items-center justify-between"
+            style={{ borderBottom: '1px solid #334155' }}
+          >
             <div className="flex items-center">
               <img src="/dokit-logo-white.png" alt="DOKit" className="h-7" />
             </div>
             <button 
               onClick={() => setSidebarOpen(false)}
-              className="lg:hidden p-1 text-slate-400 hover:text-slate-600"
+              className="lg:hidden p-1 transition-colors"
+              style={{ color: '#94A3B8' }}
             >
               <svg width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path d="M6 18L18 6M6 6l12 12"/>
@@ -171,15 +188,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {loading ? (
               <div className="px-3 py-8 text-center">
                 <div className="animate-pulse">
-                  <div className="h-4 bg-slate-200 rounded mb-3"></div>
-                  <div className="h-4 bg-slate-200 rounded w-3/4 mb-3"></div>
-                  <div className="h-4 bg-slate-200 rounded w-1/2"></div>
+                  <div className="h-4 rounded mb-3" style={{ backgroundColor: '#334155' }}></div>
+                  <div className="h-4 rounded w-3/4 mb-3" style={{ backgroundColor: '#334155' }}></div>
+                  <div className="h-4 rounded w-1/2" style={{ backgroundColor: '#334155' }}></div>
                 </div>
               </div>
             ) : (
               navigationGroups.map((group) => (
                 <div key={group.name} className="mb-6">
-                  <div className="px-3 mb-2 text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                  <div 
+                    className="px-3 mb-2 text-xs font-semibold uppercase tracking-wider"
+                    style={{ color: '#94A3B8' }}
+                  >
                     {group.name}
                   </div>
                   <div className="space-y-1">
@@ -191,14 +211,21 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                           key={item.name}
                           href={item.href}
                           onClick={() => setSidebarOpen(false)}
-                          className={`
-                            flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium
-                            transition-all duration-200
-                            ${isActive 
-                              ? 'bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/25' 
-                              : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+                          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200"
+                          style={{ 
+                            backgroundColor: isActive ? '#3B82F6' : 'transparent',
+                            color: isActive ? '#FFFFFF' : '#F1F5F9',
+                          }}
+                          onMouseEnter={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.backgroundColor = '#1E293B';
                             }
-                          `}
+                          }}
+                          onMouseLeave={(e) => {
+                            if (!isActive) {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                          }}
                         >
                           <svg 
                             width="20" 
@@ -221,31 +248,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               ))
             )}
 
-            {/* Show message if no workflows enabled */}
+            {/* No workflows message */}
             {!loading && workflows.length === 0 && (
-              <div className="px-3 py-4 text-center">
-                <div className="text-slate-400 text-sm">
-                  <svg className="mx-auto mb-2 w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
-                    <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
-                  </svg>
-                  <p>No workflows enabled</p>
-                  <p className="text-xs mt-1">Contact your administrator</p>
-                </div>
+              <div className="px-3 py-4 text-center" style={{ color: '#94A3B8' }}>
+                <svg className="mx-auto mb-2 w-8 h-8" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24">
+                  <path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"/>
+                </svg>
+                <p className="text-sm">No workflows enabled</p>
+                <p className="text-xs mt-1">Contact your administrator</p>
               </div>
             )}
           </nav>
 
           {/* User Section */}
-          <div className="p-4 border-t border-slate-100">
+          <div className="p-4" style={{ borderTop: '1px solid #334155' }}>
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 bg-gradient-to-br from-indigo-500 to-violet-500 rounded-full flex items-center justify-center text-white text-sm font-semibold">
+              <div 
+                className="w-9 h-9 rounded-full flex items-center justify-center text-white text-sm font-semibold"
+                style={{ backgroundColor: '#3B82F6' }}
+              >
                 JD
               </div>
               <div className="flex-1 min-w-0">
-                <div className="text-sm font-medium text-slate-900 truncate">John Doe</div>
-                <div className="text-xs text-slate-500 truncate">Admin</div>
+                <div className="text-sm font-medium truncate" style={{ color: '#F1F5F9' }}>John Doe</div>
+                <div className="text-xs truncate" style={{ color: '#94A3B8' }}>Admin</div>
               </div>
-              <button className="p-1.5 text-slate-400 hover:text-slate-600 rounded-lg hover:bg-slate-100">
+              <button 
+                className="p-1.5 rounded-lg transition-colors"
+                style={{ color: '#94A3B8' }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#1E293B'}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+              >
                 <svg width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                   <path d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
                 </svg>
@@ -256,8 +289,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       </aside>
 
       {/* Main Content */}
-      <main className="lg:pl-64 pt-14 lg:pt-0 min-h-screen">
-        {children}
+      <main className="lg:ml-[260px] pt-16 lg:pt-0 min-h-screen">
+        <div className="p-6">
+          {children}
+        </div>
       </main>
     </div>
   );
